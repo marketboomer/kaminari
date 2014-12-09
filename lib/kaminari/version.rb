@@ -1,3 +1,3 @@
 module Kaminari
-  VERSION = '1.0.0.alpha'
+  VERSION = '0.17.0rc'
 end
