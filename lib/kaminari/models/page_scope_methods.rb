@@ -1,14 +1,24 @@
 module Kaminari
   module PageScopeMethods
+    attr_accessor :limit_without_read_ahead
+
     # Specify the <tt>per_page</tt> value for the preceding <tt>page</tt> scope
     #   Model.page(3).per(10)
     def per(num)
       return self if (n = num.to_i) < 0 || !(/^\d/ =~ num.to_s)
 
-      n = [num, max_per_page].compact.min
-      limit(n).offset(offset_value / limit_value * n)
+      self.limit_without_read_ahead = [num, max_per_page].compact.min
+      limit(limit_without_read_ahead).offset(offset_value / limit_value * limit_without_read_ahead)
     end
 
+    def with_read_ahead(read_ahead_count=2)
+      limit(page_limit + read_ahead_count)
+    end
+
+    def page_limit
+      limit_without_read_ahead || limit_value
+    end
+    
     def padding(num)
       @_padding = num
       offset(offset_value + num.to_i)
@@ -24,7 +34,7 @@ module Kaminari
 
     # Total number of pages
     def total_pages
-      [ (count_without_padding.to_f / limit_value).ceil, max_pages ].compact.min
+      [ (count_without_padding.to_f / page_limit).ceil, max_pages ].compact.min
 
     rescue FloatDomainError => e
       raise ZeroPerPageOperation, "The number of total pages was incalculable. Perhaps you called .per(0)?"
@@ -35,7 +45,7 @@ module Kaminari
 
     # Current page number
     def current_page
-      (offset_without_padding / limit_value) + 1
+      (offset_without_padding / page_limit) + 1
 
     rescue ZeroDivisionError => e
       raise ZeroPerPageOperation, "Current page was incalculable. Perhaps you called .per(0)?"
