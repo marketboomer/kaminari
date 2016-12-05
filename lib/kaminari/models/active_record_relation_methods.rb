@@ -12,10 +12,10 @@ module Kaminari
     def total_count(column_name = :all, options = {}) #:nodoc:
       # #count overrides the #select which could include generated columns referenced in #order, so skip #order here, where it's irrelevant to the result anyway
       @total_count ||= begin
-        c = except(:offset, :limit, :order)
+        c = unscope(:offset, :limit, :order)
 
         # Remove includes only if they are irrelevant
-        c = c.except(:includes) unless references_eager_loaded_tables?
+        c = c.unscope(:includes) unless references_eager_loaded_tables?
 
         # Rails 4.1 removes the `options` argument from AR::Relation#count
         args = [column_name]
